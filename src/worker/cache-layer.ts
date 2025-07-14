@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
 import { movieDetailsHandler } from './movie-details';
+import * as Sentry from '@sentry/cloudflare';
 
 // Cache configuration
 const CACHE_HEADER = 'public, max-age=300, s-maxage=300';
@@ -17,9 +18,32 @@ export async function cacheLayerHandler(c: Context) {
     const cacheUrl = new URL(c.req.url);
     cacheUrl.pathname = `/cache/${cacheKey}`;
 
-    // Check Cloudflare cache first
+    // Check Cloudflare cache first with Sentry instrumentation
     const cache = caches.default;
-    const cachedResponse = await cache.match(cacheUrl.toString());
+    const cachedResponse = await Sentry.startSpan(
+      {
+        name: `Cache Get: ${cacheKey}`,
+        attributes: {
+          'cache.key': [cacheKey],
+          'network.peer.address': 'cloudflare-cache',
+        },
+        op: 'cache.get',
+      },
+      async (span) => {
+        const response = await cache.match(cacheUrl.toString());
+        const cacheHit = Boolean(response);
+
+        span.setAttribute('cache.hit', cacheHit);
+
+        if (cacheHit && response) {
+          // Calculate item size if response exists
+          const responseText = await response.clone().text();
+          span.setAttribute('cache.item_size', responseText.length);
+        }
+
+        return response;
+      }
+    );
 
     if (cachedResponse) {
       console.log(`Cache HIT for query: ${query}`);
@@ -59,8 +83,24 @@ export async function cacheLayerHandler(c: Context) {
         headers: headers,
       });
 
-      // Store in cache
-      await cache.put(cacheUrl.toString(), cachedResponseObj.clone());
+      // Store in cache with Sentry instrumentation
+      await Sentry.startSpan(
+        {
+          name: `Cache Put: ${cacheKey}`,
+          attributes: {
+            'cache.key': [cacheKey],
+            'network.peer.address': 'cloudflare-cache',
+          },
+          op: 'cache.put',
+        },
+        async (span) => {
+          // Calculate item size before storing
+          const responseText = await cachedResponseObj.clone().text();
+          span.setAttribute('cache.item_size', responseText.length);
+
+          await cache.put(cacheUrl.toString(), cachedResponseObj.clone());
+        }
+      );
 
       return cachedResponseObj;
     }
