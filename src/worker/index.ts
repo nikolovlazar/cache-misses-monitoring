@@ -4,13 +4,8 @@ import { cacheStatusHandler, clearCacheHandler } from './cache-management';
 import * as Sentry from '@sentry/cloudflare';
 
 const app = new Hono<{ Bindings: Env }>().onError((err, c) => {
-  // Report _all_ unhandled errors.
   Sentry.captureException(err);
-  if (err instanceof HTTPException) {
-    return err.getResponse();
-  }
-  // Or just report errors which are not instances of HTTPException
-  // Sentry.captureException(err);
+
   return c.json({ error: 'Internal server error' }, 500);
 });
 
