@@ -267,6 +267,7 @@ export default function Home() {
                 />
                 <input
                   type='text'
+                  id='search'
                   placeholder='Search movies, directors, or actors... (Press Enter to search)'
                   value={searchQuery}
                   onChange={handleSearch}

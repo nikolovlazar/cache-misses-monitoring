@@ -1,4 +1,3 @@
-import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { cloudflare } from '@cloudflare/vite-plugin';
@@ -6,10 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
 
 export default defineConfig({
-  plugins: [react(), cloudflare(), tailwindcss(), sentryVitePlugin({
-    org: "nikolovlazar",
-    project: "caching-frontend"
-  })],
+  plugins: [react(), cloudflare(), tailwindcss()],
 
   resolve: {
     alias: {
@@ -18,6 +14,6 @@ export default defineConfig({
   },
 
   build: {
-    sourcemap: true
-  }
+    sourcemap: true,
+  },
 });

@@ -2,8 +2,9 @@ import type { Context } from 'hono';
 import { movieDetailsHandler } from './movie-details';
 import * as Sentry from '@sentry/cloudflare';
 
-// Cache configuration
-const CACHE_HEADER = 'public, max-age=300, s-maxage=300';
+// Cache configuration - prevent browser caching but allow worker-level caching
+const CACHE_HEADER =
+  'public, max-age=0, s-maxage=86400, stale-while-revalidate=60';
 
 export async function cacheLayerHandler(c: Context) {
   try {
@@ -17,6 +18,10 @@ export async function cacheLayerHandler(c: Context) {
     const cacheKey = `movie-search:${query.toLowerCase()}`;
     const cacheUrl = new URL(c.req.url);
     cacheUrl.pathname = `/cache/${cacheKey}`;
+    cacheUrl.search = ''; // Clear query parameters for consistent cache key
+
+    console.log(`Cache URL: ${cacheUrl.toString()}`);
+    console.log(`Cache Key: ${cacheKey}`);
 
     // Check Cloudflare cache first with Sentry instrumentation
     const cache = caches.default;
@@ -98,7 +103,9 @@ export async function cacheLayerHandler(c: Context) {
           const responseText = await cachedResponseObj.clone().text();
           span.setAttribute('cache.item_size', responseText.length);
 
+          console.log(`Storing in cache: ${cacheUrl.toString()}`);
           await cache.put(cacheUrl.toString(), cachedResponseObj.clone());
+          console.log(`Cache storage completed for: ${cacheKey}`);
         }
       );
 
