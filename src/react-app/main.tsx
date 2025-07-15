@@ -1,7 +1,18 @@
-import { StrictMode } from 'react';
+import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
-import App from './App.tsx';
+import {
+  createBrowserRouter,
+  createRoutesFromChildren,
+  matchRoutes,
+  RouterProvider,
+  useLocation,
+  useNavigationType,
+} from 'react-router';
+
+import App from './App';
+import LiveSearch from './LiveSearch';
+import Layout from './Layout';
 
 import * as Sentry from '@sentry/react';
 
@@ -11,7 +22,13 @@ Sentry.init({
   // For example, automatic IP address collection on events
   sendDefaultPii: true,
   integrations: [
-    Sentry.browserTracingIntegration(),
+    Sentry.reactRouterV7BrowserTracingIntegration({
+      useEffect: useEffect,
+      useLocation,
+      useNavigationType,
+      createRoutesFromChildren,
+      matchRoutes,
+    }),
     Sentry.replayIntegration(),
   ],
   // Tracing
@@ -26,9 +43,29 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
 });
 
+const sentryCreateBrowserRouter =
+  Sentry.wrapCreateBrowserRouterV7(createBrowserRouter);
+
+const router = sentryCreateBrowserRouter([
+  {
+    path: '/',
+    element: <Layout />,
+    children: [
+      {
+        index: true,
+        element: <App />,
+      },
+      {
+        path: 'live-search',
+        element: <LiveSearch />,
+      },
+    ],
+  },
+]);
+
 // biome-ignore lint/style/noNonNullAssertion: <explanation>
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <RouterProvider router={router} />
   </StrictMode>
 );

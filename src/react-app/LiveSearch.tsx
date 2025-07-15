@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Search,
   Star,
@@ -189,7 +189,24 @@ const searchMovie = async (
   return data.movie;
 };
 
-export default function Home() {
+// Debounce hook
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
+export default function LiveSearch() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMovie, setSelectedMovie] = useState<(typeof MOVIES)[0] | null>(
     null
@@ -200,14 +217,13 @@ export default function Home() {
   });
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-  };
+  // Debounce search query to avoid too many API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 100);
 
-  const handleKeyPress = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      const query = searchQuery.trim();
+  // Effect to search when debounced query changes
+  useEffect(() => {
+    const performSearch = async () => {
+      const query = debouncedSearchQuery.trim();
       if (query) {
         setSearchState({ status: 'loading' });
         setSearchError(null);
@@ -226,7 +242,14 @@ export default function Home() {
           setSearchError('Failed to search for movie. Please try again.');
         }
       }
-    }
+    };
+
+    performSearch();
+  }, [debouncedSearchQuery]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
   };
 
   return (
@@ -256,16 +279,19 @@ export default function Home() {
                 <Search
                   className={cn(
                     'ml-4 h-5 w-5 transition-colors duration-300',
-                    isSearchFocused ? 'text-purple-400' : 'text-white/60'
+                    searchState.status === 'loading'
+                      ? 'animate-spin text-purple-400'
+                      : isSearchFocused
+                      ? 'text-purple-400'
+                      : 'text-white/60'
                   )}
                 />
                 <input
                   type='text'
                   id='search'
-                  placeholder='Search movies... (Press Enter to search)'
+                  placeholder='Search movies... (Live search)'
                   value={searchQuery}
                   onChange={handleSearch}
-                  onKeyPress={handleKeyPress}
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => {
                     setTimeout(() => {
@@ -294,7 +320,7 @@ export default function Home() {
             </motion.div>
 
             <div className='text-white/60 text-sm'>
-              {MOVIES.length} movies available
+              {MOVIES.length} movies available | Live Search
             </div>
           </div>
         </div>
@@ -379,9 +405,9 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             className='max-w-6xl mx-auto text-center py-20'
           >
-            <div className='text-6xl mb-4'>🎬</div>
+            <div className='text-6xl mb-4'>⚡</div>
             <h2 className='text-2xl font-semibold text-white mb-4'>
-              Welcome to CineVault
+              Live Search Ready
             </h2>
             <p className='text-white/60 mb-6'>
               Search for movies to get started. Press Enter to search.

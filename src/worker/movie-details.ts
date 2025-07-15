@@ -158,14 +158,9 @@ export async function movieDetailsHandler(c: Context) {
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // Search logic
+    // Search logic - exact match only (case insensitive)
     const foundMovie = MOVIES.find(
-      (movie) =>
-        movie.title.toLowerCase().includes(query.toLowerCase()) ||
-        movie.director.toLowerCase().includes(query.toLowerCase()) ||
-        movie.cast.some((actor) =>
-          actor.toLowerCase().includes(query.toLowerCase())
-        )
+      (movie) => movie.title.toLowerCase() === query.toLowerCase()
     );
 
     if (!foundMovie) {

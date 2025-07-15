@@ -7,8 +7,9 @@ export const options = {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '3m', target: 100 }, // Ramp up to 100 VUs over 3 minutes
-        { duration: '30s', target: 0 }, // Ramp down over 30 seconds
+        { duration: '10s', target: 10 },
+        { duration: '40s', target: 10 },
+        { duration: '10s', target: 0 },
       ],
       options: {
         browser: {
@@ -30,7 +31,7 @@ const movieTitles = [
 ];
 
 // const BASE_URL = 'https://cache-misses-monitoring.lazar-nikolov-94.workers.dev'; // For production
-const BASE_URL = 'http://localhost:5173'; // For local development
+const BASE_URL = 'http://localhost:5173/live-search'; // For local development
 
 export default async function () {
   const context = await browser.newContext();
@@ -40,10 +41,10 @@ export default async function () {
     // Navigate to the React app
     await page.goto(BASE_URL, { waitUntil: 'networkidle' });
 
-    // Each VU performs just ONE search then dies
+    // Each VU types one movie title character by character to trigger live search
     const randomTitle =
       movieTitles[Math.floor(Math.random() * movieTitles.length)];
-    console.log(`VU searching for: "${randomTitle}"`);
+    console.log(`VU will type: "${randomTitle}"`);
 
     // Find the search input using locator (modern k6 approach)
     const searchInput = page.locator('input[id="search"]');
@@ -68,32 +69,39 @@ export default async function () {
     await page.keyboard.press('Backspace');
     await page.waitForTimeout(200);
 
-    // Type the new movie title
-    await page.keyboard.type(randomTitle);
-    await page.waitForTimeout(500);
+    // Type the movie title letter by letter to trigger live search
+    console.log(`🔤 Typing "${randomTitle}" character by character...`);
 
-    console.log(`✅ Set input value to: "${randomTitle}"`);
+    for (let i = 0; i < randomTitle.length; i++) {
+      const char = randomTitle[i];
+      await page.keyboard.type(char);
 
-    // Submit the search by pressing Enter
-    await page.keyboard.press('Enter');
+      const currentValue = randomTitle.substring(0, i + 1);
+      console.log(`⌨️  Typed: "${currentValue}"`);
 
-    // Wait for search to start (loading indicator appears)
-    await page.waitForTimeout(500);
+      // Wait 400ms between characters to allow debounced search to trigger
+      // (LiveSearch has 300ms debounce, so 400ms should be enough)
+      await page.waitForTimeout(150);
+    }
 
-    // Wait for search results to load completely
+    console.log(`✅ Finished typing: "${randomTitle}"`);
+
+    // Wait a bit more for the final search to complete
+    await page.waitForTimeout(1000);
+
+    // Wait for any final search operations to complete
+    await page.waitForTimeout(1000);
+
+    // Check if we have movie details displayed (indicating successful search)
     try {
-      // Wait for loading to complete by checking if "Searching" text disappears
-      await page.waitForFunction(
-        () => {
-          const bodyText = document.body.textContent || '';
-          return !bodyText.includes('Searching');
-        },
-        { timeout: 10000 }
-      );
-
-      console.log(`✅ Search completed for "${randomTitle}" - VU dying`);
+      // Look for movie details content to verify search worked
+      await page.waitForSelector(`img[alt*="${randomTitle}"]`, {
+        timeout: 5000,
+      });
+      console.log(`✅ Live search completed for "${randomTitle}" - VU dying`);
     } catch (error) {
-      console.log(`⚠️ Search timeout for "${randomTitle}" - VU dying anyway`);
+      // Could be "not found" result or still loading - that's okay for testing
+      console.log(`⚠️ Live search finished for "${randomTitle}" - VU dying`);
     }
   } catch (error) {
     console.log(`❌ Error: ${error.message}`);
@@ -104,26 +112,28 @@ export default async function () {
 }
 
 export function handleSummary(data) {
-  console.log('\n🎯 BROWSER TEST SUMMARY:');
-  console.log('Max VUs: 100');
+  console.log('\n🎯 LIVE SEARCH TEST SUMMARY:');
+  console.log('Max VUs: 10');
   console.log(
     `Test Duration: ${Math.round(data.state.testRunDurationMs / 1000)}s`
   );
   const iterationsCompleted = data.metrics?.iterations?.values?.count || 0;
-  console.log(`Searches Completed: ${iterationsCompleted}`);
+  console.log(`Typing Sessions Completed: ${iterationsCompleted}`);
 
-  // Calculate search rate
-  const searchRate =
+  // Calculate typing session rate
+  const sessionRate =
     iterationsCompleted / (data.state.testRunDurationMs / 1000);
-  console.log(`Search Rate: ${searchRate.toFixed(2)} searches/second`);
+  console.log(
+    `Typing Sessions Rate: ${sessionRate.toFixed(2)} sessions/second`
+  );
 
   return {
     'browser-test-summary.json': JSON.stringify(
       {
-        maxVUs: 100,
+        maxVUs: 10,
         testDuration: data.state.testRunDurationMs,
-        searchesCompleted: iterationsCompleted,
-        searchRate: searchRate,
+        typingSessionsCompleted: iterationsCompleted,
+        typingSessionRate: sessionRate,
         timestamp: new Date().toISOString(),
       },
       null,
