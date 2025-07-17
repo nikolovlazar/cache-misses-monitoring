@@ -1,19 +1,16 @@
-import { browser } from 'k6/browser';
-import { check } from 'k6';
-
 export const options = {
   scenarios: {
     ui: {
-      executor: 'ramping-vus',
+      executor: "ramping-vus",
       startVUs: 0,
       stages: [
-        { duration: '10s', target: 10 },
-        { duration: '40s', target: 10 },
-        { duration: '10s', target: 0 },
+        { duration: "10s", target: 10 },
+        { duration: "40s", target: 10 },
+        { duration: "10s", target: 0 },
       ],
       options: {
         browser: {
-          type: 'chromium',
+          type: "chromium",
         },
       },
     },
@@ -22,16 +19,16 @@ export const options = {
 
 // Pool of movie titles to search for
 const movieTitles = [
-  'The Matrix',
-  'Inception',
-  'Pulp Fiction',
-  'The Dark Knight',
-  'Forrest Gump',
-  'Interstellar',
+  "The Matrix",
+  "Inception",
+  "Pulp Fiction",
+  "The Dark Knight",
+  "Forrest Gump",
+  "Interstellar",
 ];
 
 // const BASE_URL = 'https://cache-misses-monitoring.lazar-nikolov-94.workers.dev'; // For production
-const BASE_URL = 'http://localhost:5173/live-search'; // For local development
+const BASE_URL = "http://localhost:5173/live-search"; // For local development
 
 export default async function () {
   const context = await browser.newContext();
@@ -39,7 +36,7 @@ export default async function () {
 
   try {
     // Navigate to the React app
-    await page.goto(BASE_URL, { waitUntil: 'networkidle' });
+    await page.goto(BASE_URL, { waitUntil: "networkidle" });
 
     // Each VU types one movie title character by character to trigger live search
     const randomTitle =
@@ -50,23 +47,23 @@ export default async function () {
     const searchInput = page.locator('input[id="search"]');
 
     // Wait for the search input to be visible
-    await searchInput.waitFor({ state: 'visible', timeout: 10000 });
+    await searchInput.waitFor({ state: "visible", timeout: 10000 });
 
     // Click on the input to focus it
     await searchInput.click();
     await page.waitForTimeout(200);
 
     // Clear the input by selecting all and using backspace (since backspace works but delete doesn't)
-    await page.keyboard.press('Backspace');
-    await page.keyboard.press('Backspace');
-    await page.keyboard.press('Backspace');
-    await page.keyboard.press('Backspace');
-    await page.keyboard.press('Backspace');
-    await page.keyboard.press('Backspace');
-    await page.keyboard.press('Backspace');
-    await page.keyboard.press('Backspace');
-    await page.keyboard.press('Backspace');
-    await page.keyboard.press('Backspace');
+    await page.keyboard.press("Backspace");
+    await page.keyboard.press("Backspace");
+    await page.keyboard.press("Backspace");
+    await page.keyboard.press("Backspace");
+    await page.keyboard.press("Backspace");
+    await page.keyboard.press("Backspace");
+    await page.keyboard.press("Backspace");
+    await page.keyboard.press("Backspace");
+    await page.keyboard.press("Backspace");
+    await page.keyboard.press("Backspace");
     await page.waitForTimeout(200);
 
     // Type the movie title letter by letter to trigger live search
@@ -77,7 +74,7 @@ export default async function () {
       await page.keyboard.type(char);
 
       const currentValue = randomTitle.substring(0, i + 1);
-      console.log(`⌨️  Typed: "${currentValue}"`);
+      console.log(`⌨  Typed: "${currentValue}"`);
 
       // Wait 400ms between characters to allow debounced search to trigger
       // (LiveSearch has 300ms debounce, so 400ms should be enough)
@@ -99,9 +96,9 @@ export default async function () {
         timeout: 5000,
       });
       console.log(`✅ Live search completed for "${randomTitle}" - VU dying`);
-    } catch (error) {
+    } catch (_) {
       // Could be "not found" result or still loading - that's okay for testing
-      console.log(`⚠️ Live search finished for "${randomTitle}" - VU dying`);
+      console.log(`! Live search finished for "${randomTitle}" - VU dying`);
     }
   } catch (error) {
     console.log(`❌ Error: ${error.message}`);
@@ -112,10 +109,10 @@ export default async function () {
 }
 
 export function handleSummary(data) {
-  console.log('\n🎯 LIVE SEARCH TEST SUMMARY:');
-  console.log('Max VUs: 10');
+  console.log("\n🎯 LIVE SEARCH TEST SUMMARY:");
+  console.log("Max VUs: 10");
   console.log(
-    `Test Duration: ${Math.round(data.state.testRunDurationMs / 1000)}s`
+    `Test Duration: ${Math.round(data.state.testRunDurationMs / 1000)}s`,
   );
   const iterationsCompleted = data.metrics?.iterations?.values?.count || 0;
   console.log(`Typing Sessions Completed: ${iterationsCompleted}`);
@@ -124,11 +121,11 @@ export function handleSummary(data) {
   const sessionRate =
     iterationsCompleted / (data.state.testRunDurationMs / 1000);
   console.log(
-    `Typing Sessions Rate: ${sessionRate.toFixed(2)} sessions/second`
+    `Typing Sessions Rate: ${sessionRate.toFixed(2)} sessions/second`,
   );
 
   return {
-    'browser-test-summary.json': JSON.stringify(
+    "browser-test-summary.json": JSON.stringify(
       {
         maxVUs: 10,
         testDuration: data.state.testRunDurationMs,
@@ -137,7 +134,7 @@ export function handleSummary(data) {
         timestamp: new Date().toISOString(),
       },
       null,
-      2
+      2,
     ),
   };
 }

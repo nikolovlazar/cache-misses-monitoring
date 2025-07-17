@@ -1,11 +1,11 @@
-import type { Context } from 'hono';
+import type { Context } from "hono";
 
 export async function cacheStatusHandler(c: Context) {
   try {
-    const query = c.req.query('q');
+    const query = c.req.query("q");
 
     if (!query) {
-      return c.json({ error: 'Search query is required' }, { status: 400 });
+      return c.json({ error: "Search query is required" }, { status: 400 });
     }
 
     // Create the same cache key used in cache-layer
@@ -20,7 +20,7 @@ export async function cacheStatusHandler(c: Context) {
     if (cachedResponse) {
       const cacheHeaders = Object.fromEntries(cachedResponse.headers);
       return c.json({
-        status: 'HIT',
+        status: "HIT",
         query: query,
         cacheKey: cacheKey,
         headers: cacheHeaders,
@@ -29,23 +29,23 @@ export async function cacheStatusHandler(c: Context) {
     }
 
     return c.json({
-      status: 'MISS',
+      status: "MISS",
       query: query,
       cacheKey: cacheKey,
       cached: false,
     });
   } catch (error) {
-    console.error('Error checking cache status:', error);
-    return c.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Error checking cache status:", error);
+    return c.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
 export async function clearCacheHandler(c: Context) {
   try {
-    const query = c.req.query('q');
+    const query = c.req.query("q");
 
     if (!query) {
-      return c.json({ error: 'Search query is required' }, { status: 400 });
+      return c.json({ error: "Search query is required" }, { status: 400 });
     }
 
     // Create the same cache key used in cache-layer
@@ -63,11 +63,11 @@ export async function clearCacheHandler(c: Context) {
       cacheKey: cacheKey,
       deleted: deleted,
       message: deleted
-        ? 'Cache cleared successfully'
-        : 'No cache entry found to clear',
+        ? "Cache cleared successfully"
+        : "No cache entry found to clear",
     });
   } catch (error) {
-    console.error('Error clearing cache:', error);
-    return c.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Error clearing cache:", error);
+    return c.json({ error: "Internal server error" }, { status: 500 });
   }
 }

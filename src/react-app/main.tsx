@@ -1,6 +1,6 @@
-import { StrictMode, useEffect } from 'react';
-import { createRoot } from 'react-dom/client';
-import './index.css';
+import { StrictMode, useEffect } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
 import {
   createBrowserRouter,
   createRoutesFromChildren,
@@ -8,16 +8,16 @@ import {
   RouterProvider,
   useLocation,
   useNavigationType,
-} from 'react-router';
+} from "react-router";
 
-import App from './App';
-import LiveSearch from './LiveSearch';
-import Layout from './Layout';
+import App from "./App";
+import LiveSearch from "./LiveSearch";
+import Layout from "./Layout";
 
-import * as Sentry from '@sentry/react';
+import * as Sentry from "@sentry/react";
 
 Sentry.init({
-  dsn: 'https://07211b41ecf7997e52c6e989795f3cb7@o4506044970565632.ingest.us.sentry.io/4509668555882496',
+  dsn: "https://07211b41ecf7997e52c6e989795f3cb7@o4506044970565632.ingest.us.sentry.io/4509668555882496",
   // Setting this option to true will send default PII data to Sentry.
   // For example, automatic IP address collection on events
   sendDefaultPii: true,
@@ -35,7 +35,7 @@ Sentry.init({
   tracesSampleRate: 1.0, //  Capture 100% of the transactions
   // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
   tracePropagationTargets: [
-    'localhost',
+    "localhost",
     /^https:\/\/cache-misses-monitoring\.lazar-nikolov-94\.workers\.dev\/api/,
   ],
   // Session Replay
@@ -48,7 +48,7 @@ const sentryCreateBrowserRouter =
 
 const router = sentryCreateBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <Layout />,
     children: [
       {
@@ -56,7 +56,7 @@ const router = sentryCreateBrowserRouter([
         element: <App />,
       },
       {
-        path: 'live-search',
+        path: "live-search",
         element: <LiveSearch />,
       },
     ],
@@ -64,8 +64,8 @@ const router = sentryCreateBrowserRouter([
 ]);
 
 // biome-ignore lint/style/noNonNullAssertion: <explanation>
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <RouterProvider router={router} />
-  </StrictMode>
+  </StrictMode>,
 );
