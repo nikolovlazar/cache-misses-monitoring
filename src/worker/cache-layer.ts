@@ -65,7 +65,7 @@ export async function cacheLayerHandler(c: Context) {
         if (movieResponse.status === 200) {
           const responseToCache = movieResponse.clone();
 
-          span.setAttribute("cache.miss_reason", "movie_not_cached");
+          span.setAttribute("cache_miss_reason", "movie_not_cached");
 
           const headers = new Headers(movieResponse.headers);
           headers.set("Cache-Control", CACHE_HEADER);
@@ -99,7 +99,7 @@ export async function cacheLayerHandler(c: Context) {
           return cachedResponseObj;
         }
 
-        span.setAttribute("cache.miss_reason", "movie_not_found");
+        span.setAttribute("cache_miss_reason", "movie_not_found");
 
         const headers = new Headers(movieResponse.headers);
         headers.set("X-Cache-Status", "MISS");
