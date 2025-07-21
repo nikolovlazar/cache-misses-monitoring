@@ -12,7 +12,6 @@ const app = new Hono<{ Bindings: Env }>().onError((err, c) => {
 app.get("/api/", (c) => c.json({ name: "Cloudflare" }));
 app.get("/api/movie-details", cacheLayerHandler);
 
-// Cache management endpoints
 app.get("/api/cache/status", cacheStatusHandler);
 app.delete("/api/cache/clear", clearCacheHandler);
 

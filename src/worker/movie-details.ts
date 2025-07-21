@@ -1,6 +1,5 @@
 import type { Context } from "hono";
 
-// Movie data - can be moved to a database later
 const MOVIES = [
   {
     id: 1,
@@ -150,15 +149,12 @@ export async function movieDetailsHandler(c: Context) {
   try {
     const query = c.req.query("q");
 
-    // If no query provided, return error
     if (!query) {
       return c.json({ error: "Search query is required" }, { status: 400 });
     }
 
-    // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // Search logic - exact match only (case insensitive)
     const foundMovie = MOVIES.find(
       (movie) => movie.title.toLowerCase() === query.toLowerCase(),
     );

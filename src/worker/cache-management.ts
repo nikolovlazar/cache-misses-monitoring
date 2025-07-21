@@ -8,12 +8,10 @@ export async function cacheStatusHandler(c: Context) {
       return c.json({ error: "Search query is required" }, { status: 400 });
     }
 
-    // Create the same cache key used in cache-layer
     const cacheKey = `movie-search:${query.toLowerCase()}`;
     const cacheUrl = new URL(c.req.url);
     cacheUrl.pathname = `/cache/${cacheKey}`;
 
-    // Check if item exists in cache
     const cache = caches.default;
     const cachedResponse = await cache.match(cacheUrl.toString());
 
@@ -48,12 +46,10 @@ export async function clearCacheHandler(c: Context) {
       return c.json({ error: "Search query is required" }, { status: 400 });
     }
 
-    // Create the same cache key used in cache-layer
     const cacheKey = `movie-search:${query.toLowerCase()}`;
     const cacheUrl = new URL(c.req.url);
     cacheUrl.pathname = `/cache/${cacheKey}`;
 
-    // Delete from cache
     const cache = caches.default;
     const deleted = await cache.delete(cacheUrl.toString());
 
